@@ -1,0 +1,136 @@
+<html ng-app="sampleApp">
+<head>
+<!-- AngularJS -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+  <!-- AngularFire -->
+  <script src="https://cdn.firebase.com/libs/angularfire/2.0.1/angularfire.min.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyAr1O53UwebixTDtdiDsyHxfKE-7lYmJgc",
+      authDomain: "prj-cost-recovery.firebaseapp.com",
+      databaseURL: "https://prj-cost-recovery.firebaseio.com",
+      storageBucket: "prj-cost-recovery.appspot.com",
+    };
+    firebase.initializeApp(config);
+  </script>
+
+  <script>
+    var provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('https://www.googleapis.com/auth/plus.login');
+
+    function writeUserData(uid, name, email,picture,timestamp) {
+      firebase.database().ref('users/' + uid).child("email").set(email);
+      firebase.database().ref('users/' + uid).child("name").set(name);
+      //firebase.database().ref('users/' + uid).child(set({
+      //  email: email,
+      //  picture: picture,
+      //  timeStamp: timestamp
+      //});
+    }
+    var user = firebase.auth().currentUser;
+
+    firebase.auth().signInWithPopup(provider).then(function(result) {
+      // This gives you a Google Access Token. You can use it to access the Google API.
+      var token = result.credential.accessToken;
+      console.log(token);
+      // The signed-in user info.
+      var user = result.user;
+      var user = firebase.auth().currentUser;
+      if (user != null) {
+        console.log("UID: " + user.uid);
+        console.log("name: " + user.displayName);
+        console.log("Provider: " + user.providerId)
+        var uid = user.uid;
+        user.providerData.forEach(function (profile) {
+          console.log("Sign-in provider: "+profile.providerId);
+          console.log("  Provider-specific UID: "+ profile.uid);
+          console.log("  Name: " + profile.displayName);
+          console.log("  Email: " + profile.email);
+          console.log("  Photo URL: " + profile.photoURL);
+          console.log("time:" + Date(profile.timeStamp));
+          writeUserData(uid,profile.displayName,profile.email,profile.photoURL,firebase.database.ServerValue.TIMESTAMP);
+          var title = "test";
+          var introduction = "introduction";
+        });
+      }
+    // ...
+    }).catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // The email of the user's account used.
+      var email = error.email;
+      // The firebase.auth.AuthCredential type that was used.
+      var credential = error.credential;
+      // ...
+    });
+
+    var app = angular.module("sampleApp", ["firebase"]);
+    app.controller("SampleCtrl", function($scope, $firebaseObject) {
+      var ref = firebase.database().ref().child("data");
+      // download the data into a local object
+      var syncObject = $firebaseObject(ref);
+      syncObject.$bindTo($scope, "data");
+    });
+
+    app.controller("SampleCtrl2", function($scope, $firebaseArray) {
+      var ref = firebase.database().ref().child("works");
+      // create a synchronized array
+      // click on `index.html` above to see it used in the DOM!
+      $scope.messages = $firebaseArray(ref);
+    });
+
+    app.controller("SampleCtrl3", function($scope, $firebaseArray) {
+      var ref = firebase.database().ref().child("works");
+      // create a synchronized array
+      $scope.messages = $firebaseArray(ref);
+      // add new items to the array
+      // the message is automatically added to our Firebase database!
+      $scope.addMessage = function() {
+        $scope.messages.$add({
+          title: $scope.newMessageText,
+          username: "maurizio",
+          email: "maurizio.blasilli@gmail.com",
+          picture: "",
+          timeStamp: firebase.database.ServerValue.TIMESTAMP
+        });
+      };
+    });
+  </script>
+</head>
+<body>
+
+  <div ng-controller="SampleCtrl">
+    <!-- anything typed in here is magically saved to our Firebase database! -->
+    <input type="text" ng-model="data.text"/>
+    <!-- all changes from our Firebase database magically appear here! -->
+    <h1>You said: {{ data.text }}</h1>
+  </div>
+
+  <div ng-controller="SampleCtrl2">
+    <ul>
+      <li ng-repeat="message in messages">{{ message.timeStamp }}</li>
+    </ul>
+  </div>
+
+  <div ng-controller="SampleCtrl3">
+    <ul>
+      <li ng-repeat="message in messages">
+        <!-- edit a message -->
+        <input ng-model="message.timeStamp" ng-change="messages.$save(message)" />
+        <!-- delete a message -->
+        <button ng-click="messages.$remove(message)">Delete Message</button>
+      </li>
+    </ul>
+    <!-- push a new message onto the array -->
+    <form ng-submit="addMessage()">
+      <input ng-model="newMessageText" />
+      <button type="submit">Add Message</button>
+    </form>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,77 @@
+<html>
+<head>
+
+  <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyCFiaxMf_8hI0jwAN4rV0DoccqoA_ZyF6A",
+      authDomain: "project-6242851242468882478.firebaseapp.com",
+      databaseURL: "https://project-6242851242468882478.firebaseio.com",
+      storageBucket: "project-6242851242468882478.appspot.com",
+    };
+    firebase.initializeApp(config);
+    var database = firebase.database();
+  </script>
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <script>
+  var provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/plus.login');
+
+  function writeUserData(userId, name, email,picture,timestamp) {
+    firebase.database().ref('users/' + userId).push({
+      username: name,
+      email: email,
+      picture: picture,
+      timeStamp: timestamp
+    });
+  }
+
+  function writeWorkData(userId, title, introduction,timestamp) {
+    firebase.database().ref('works/' + title).push({
+      title: title,
+      introduction: introduction,
+      userId: userId,
+      timeStamp: timestamp
+    });
+  }
+
+  firebase.auth().signInWithPopup(provider).then(function(result) {
+    // This gives you a Google Access Token. You can use it to access the Google API.
+    var token = result.credential.accessToken;
+    console.log(token);
+    // The signed-in user info.
+    var user = result.user;
+    var user = firebase.auth().currentUser;
+
+    if (user != null) {
+      user.providerData.forEach(function (profile) {
+        console.log("Sign-in provider: "+profile.providerId);
+        console.log("  Provider-specific UID: "+profile.uid);
+        console.log("  Name: " + profile.displayName);
+        console.log("  Email: " + profile.email);
+        console.log("  Photo URL: " + profile.photoURL);
+        console.log("time:" + Date(profile.timeStamp));
+        writeUserData(profile.uid,profile.displayName,profile.email,profile.photoURL,firebase.database.ServerValue.TIMESTAMP);
+        var title = "test";
+        var introduction = "introduction";
+        writeWorkData(profile.uid, title, introduction,firebase.database.ServerValue.TIMESTAMP)
+      });
+    }
+  // ...
+}).catch(function(error) {
+  // Handle Errors here.
+  var errorCode = error.code;
+  var errorMessage = error.message;
+  // The email of the user's account used.
+  var email = error.email;
+  // The firebase.auth.AuthCredential type that was used.
+  var credential = error.credential;
+  // ...
+});
+  </script>
+</head>
+<body>
+
+</body>
+</html>
