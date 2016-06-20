@@ -1,0 +1,60 @@
+<html ng-app="sampleApp">
+<head>
+<!-- AngularJS -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/live/3.0/firebase.js"></script>
+  <!-- AngularFire -->
+  <script src="https://cdn.firebase.com/libs/angularfire/2.0.1/angularfire.min.js"></script>
+  <script>
+    // Initialize Firebase
+    var config = {
+      apiKey: "AIzaSyAr1O53UwebixTDtdiDsyHxfKE-7lYmJgc",
+      authDomain: "prj-cost-recovery.firebaseapp.com",
+      databaseURL: "https://prj-cost-recovery.firebaseio.com",
+      storageBucket: "prj-cost-recovery.appspot.com",
+    };
+    firebase.initializeApp(config);
+    var app = angular.module("sampleApp", ["firebase"]);
+  </script>
+
+  <script>
+  app.controller("CreatePrj", function($scope, $firebaseArray) {
+    var ref = firebase.database().ref().child("projects");
+    // create a synchronized array
+    $scope.projects = $firebaseArray(ref);
+    // add new items to the array
+    // the message is automatically added to our Firebase database!
+    $scope.addProjects = function() {
+      $scope.projects.$add({
+        title: $scope.newProjectTitle,
+        description: $scope.newProjectDescription,
+        timeStamp: firebase.database.ServerValue.TIMESTAMP
+      }).then(function() {
+      });
+    };
+  });
+  </script>
+
+</head>
+<body>
+  <div ng-controller="CreatePrj">
+    <ul>
+      <li ng-repeat="project in projects">
+        <!-- edit a message -->
+        <input ng-model="project.$id" ng-change="projects.$save(project)" />
+        <!-- delete a message -->
+        <button ng-click="projects.$remove(project)">Delete This Project</button>
+      </li>
+    </ul>
+    <!-- push a new message onto the array -->
+    <form ng-submit="addProjects()">
+      <input ng-model="newProjectTitle" />
+      <textarea ng-model="newProjectDescription"></textarea>
+      <button type="submit">Add Project</button>
+    </form>
+  </div>
+
+
+</body>
+</html>
